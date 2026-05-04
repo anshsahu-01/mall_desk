@@ -414,11 +414,11 @@ function RobotFigure({ progress }: { progress: MotionValue<number> }) {
 }
 
 function PlateScene({ progress }: { progress: MotionValue<number> }) {
-  const plateScale = useTransform(progress, [0, 0.4, 1], [0.86, 1.03, 1.56]);
-  const plateY = useTransform(progress, [0, 1], ["12%", "-6%"]);
-  const plateOpacity = useTransform(progress, [0.58, 0.92, 1], [1, 0.82, 0.68]);
-  const diningRevealScale = useTransform(progress, [0.44, 1], [0.2, 1.12]);
-  const diningRevealOpacity = useTransform(progress, [0.34, 0.48, 1], [0, 0.92, 1]);
+  const plateScale = useTransform(progress, [0, 0.4, 0.8, 1], [0.86, 1.05, 1.8, 2.4]);
+  const plateY = useTransform(progress, [0, 1], ["12%", "-2%"]);
+  const plateOpacity = useTransform(progress, [0.6, 0.85, 1], [1, 0.4, 0]);
+  const diningRevealScale = useTransform(progress, [0.3, 0.8, 1], [0.4, 1.05, 1.12]);
+  const diningRevealOpacity = useTransform(progress, [0.3, 0.5, 1], [0, 1, 1]);
 
   return (
     <div className="relative h-[82vh] w-full">
@@ -600,31 +600,32 @@ function LuxuryExperienceScene() {
     gsap.registerPlugin(ScrollTrigger);
 
     const ctx = gsap.context(() => {
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+
       if (corridorRef.current && corridorTrackRef.current) {
+        const track = corridorTrackRef.current;
         const panels = gsap.utils.toArray<HTMLElement>("[data-corridor-panel]");
-        const corridorBounds = () => {
-          const totalWidth = corridorTrackRef.current?.scrollWidth ?? 0;
-          const viewportWidth = window.innerWidth;
+        
+        console.log("track width:", track.scrollWidth);
+        console.log("viewport width:", window.innerWidth);
 
-          return Math.max(0, totalWidth - viewportWidth);
-        };
-
-        gsap.to(corridorTrackRef.current, {
-          x: () => -corridorBounds(),
+        const horizontalTween = gsap.to(track, {
+          x: () => -(track.scrollWidth - window.innerWidth),
           ease: "none",
           scrollTrigger: {
-            trigger: corridorTrackRef.current,
+            trigger: track,
             pin: corridorRef.current,
-            start: "top center",
-            end: () => `+=${corridorBounds()}`,
+            start: "top top",
+            end: () => "+=" + (track.scrollWidth - window.innerWidth),
             pinSpacing: true,
             scrub: 1,
             anticipatePin: 1,
             invalidateOnRefresh: true,
+            markers: true,
           },
         });
 
-        panels.forEach((panel, index) => {
+        panels.forEach((panel) => {
           gsap.fromTo(
             panel,
             { opacity: 0.42, y: 56, scale: 0.97 },
@@ -634,9 +635,10 @@ function LuxuryExperienceScene() {
               scale: 1,
               ease: "power2.out",
               scrollTrigger: {
-                trigger: corridorTrackRef.current,
-                start: `${index * 20 + 2}% center`,
-                end: `${index * 20 + 20}% center`,
+                trigger: panel,
+                containerAnimation: horizontalTween,
+                start: "left 85%",
+                end: "center center",
                 scrub: 1,
               },
             },
@@ -675,6 +677,10 @@ function LuxuryExperienceScene() {
           },
         });
       }
+
+      setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 100);
     }, pageRef);
 
     return () => {

@@ -158,7 +158,7 @@ export function CinematicVideo({
       onBlur={() => setIsHovered(false)}
     >
       <div
-        className={`absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1),transparent_30%),linear-gradient(180deg,#181818,#050505)] ${
+        className={`absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1),transparent_30%),linear-gradient(to_bottom,rgba(0,0,0,0.6),rgba(0,0,0,0.2))] ${
           posterClassName ?? ""
         } ${isReady ? "opacity-0" : "opacity-100"} transition-opacity duration-500`}
       >
@@ -188,7 +188,7 @@ export function CinematicVideo({
       <div
         className={`absolute inset-0 ${
           overlayClassName ??
-          "bg-[linear-gradient(180deg,rgba(0,0,0,0.16),rgba(0,0,0,0.78))]"
+          "bg-[linear-gradient(to_bottom,rgba(0,0,0,0.6),rgba(0,0,0,0.2))]"
         }`}
       />
 

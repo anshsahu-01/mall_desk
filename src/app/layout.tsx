@@ -28,9 +28,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${displayFont.variable} ${sansFont.variable} h-full bg-black text-white antialiased`}
+      className={`${displayFont.variable} ${sansFont.variable} relative h-full bg-black text-white antialiased`}
     >
-      <body className="min-h-full bg-black text-white">{children}</body>
+      <body className="relative min-h-full bg-black text-white">{children}</body>
     </html>
   );
 }

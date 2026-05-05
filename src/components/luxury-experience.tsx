@@ -1,8 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import dynamic from "next/dynamic";
+import { type ElementType, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   MotionValue,
   motion,
@@ -17,16 +16,27 @@ import { CinematicVideo } from "@/components/media/cinematic-video";
 import { CinematicPreloader } from "@/components/ui/cinematic-preloader";
 import { AmbientStrokes } from "@/components/ui/ambient-strokes";
 
+const BASE_MEDIA_OVERLAY =
+  "bg-[linear-gradient(to_bottom,rgba(0,0,0,0.6),rgba(0,0,0,0.2))]";
 
-function AnimatedText({ children, className, as: Component = "div" }: { children: React.ReactNode, className?: string, as?: any }) {
-  const MotionComponent = motion(Component as any);
+function AnimatedText({
+  children,
+  className,
+  as: Component = "div",
+}: {
+  children: ReactNode;
+  className?: string;
+  as?: ElementType;
+}) {
+  const MotionComponent = useMemo(() => motion.create(Component), [Component]);
   return (
     <MotionComponent
-      initial={{ opacity: 0, y: 16, filter: 'blur(4px)' }}
-      whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.4 }}
       transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-      className={className}
+      className={["relative", className].filter(Boolean).join(" ")}
+      style={{ willChange: "transform, opacity" }}
     >
       {children}
     </MotionComponent>
@@ -218,8 +228,10 @@ function MediaCard({
             src={media.src}
             alt={media.alt}
             className="h-full w-full object-cover grayscale [transform:translateZ(0)]"
+            loading="lazy"
+            decoding="async"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.16),rgba(0,0,0,0.82))]" />
+          <div className={`absolute inset-0 ${BASE_MEDIA_OVERLAY}`} />
         </>
       )}
     </div>
@@ -438,7 +450,7 @@ function PlateScene({ progress }: { progress: MotionValue<number> }) {
             <VideoSurface
               asset={restaurantVideo}
               playMode="visible"
-              overlayClassName="bg-[linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.24))]"
+              overlayClassName={BASE_MEDIA_OVERLAY}
             />
           </motion.div>
         </div>
@@ -628,8 +640,7 @@ function LuxuryExperienceScene() {
   const robotPinRef = useRef<HTMLDivElement>(null);
   const diningRef = useRef<HTMLElement>(null);
   const diningPinRef = useRef<HTMLDivElement>(null);
-
-  const { scrollYProgress } = useScroll();
+  const deviceSectionRef = useRef<HTMLElement>(null);
 
   const { scrollYProgress: heroProgress } = useScroll({
     target: heroRef,
@@ -641,7 +652,6 @@ function LuxuryExperienceScene() {
   const heroVideoRadius = useTransform(heroProgress, [0, 0.8, 1], ["0rem", "2.4rem", "1.8rem"]);
   const heroInfoY = useTransform(heroProgress, [0, 1], ["0%", "26%"]);
   const heroInfoOpacity = useTransform(heroProgress, [0, 0.72], [1, 0.18]);
-  const heroOverlayOpacity = useTransform(heroProgress, [0, 1], [0.34, 0.78]);
   const heroMiniOpacity = useTransform(heroProgress, [0.72, 1], [0, 1]);
 
   const { scrollYProgress: atriumProgress } = useScroll({
@@ -656,8 +666,13 @@ function LuxuryExperienceScene() {
   const atriumTextOpacity = useTransform(atriumProgress, [0, 0.72], [1, 0.14]);
   const atriumMiniOpacity = useTransform(atriumProgress, [0.76, 1], [0, 1]);
 
+  const { scrollYProgress: deviceSectionProgress } = useScroll({
+    target: deviceSectionRef,
+    offset: ["start end", "end start"],
+  });
+  const deviceImageY = useTransform(deviceSectionProgress, [0, 1], ["-4%", "4%"]);
+
   const robotProgress = useMotionValue(0);
-  const robotTextOpacity = useTransform(robotProgress, [0, 0.3, 0.68], [0.3, 1, 0.12]);
   const robotBgScale = useTransform(robotProgress, [0, 1], [1.08, 1]);
   const electronicsPortalScale = useTransform(robotProgress, [0.15, 0.45, 1], [0.12, 1.04, 1.04]);
   const electronicsPortalOpacity = useTransform(robotProgress, [0.1, 0.2, 0.45, 1], [0, 0.95, 1, 1]);
@@ -665,7 +680,6 @@ function LuxuryExperienceScene() {
   const electronicsPortalY = useTransform(robotProgress, [0.15, 0.45, 1], ["-10vh", "0vh", "0vh"]);
 
   const diningProgress = useMotionValue(0);
-  const diningTextOpacity = useTransform(diningProgress, [0, 0.28, 0.68], [0.3, 1, 0.1]);
   const diningBgScale = useTransform(diningProgress, [0, 1], [1.1, 1]);
   const diningWorldScale = useTransform(diningProgress, [0.15, 0.45, 1], [0.14, 1.04, 1.04]);
   const diningWorldOpacity = useTransform(diningProgress, [0.1, 0.2, 0.45, 1], [0, 0.95, 1, 1]);
@@ -681,9 +695,6 @@ function LuxuryExperienceScene() {
       if (corridorRef.current && corridorTrackRef.current) {
         const track = corridorTrackRef.current;
         const panels = gsap.utils.toArray<HTMLElement>("[data-corridor-panel]");
-        
-        console.log("track width:", track.scrollWidth);
-        console.log("viewport width:", window.innerWidth);
 
         const horizontalTween = gsap.to(track, {
           x: () => -(track.scrollWidth - window.innerWidth),
@@ -767,10 +778,10 @@ function LuxuryExperienceScene() {
 
   return (
     <SmoothScrollProvider>
-      <div ref={pageRef} className="bg-black text-white">
+      <div ref={pageRef} className="relative bg-black text-white">
         <main className="relative overflow-hidden">
           <section ref={heroRef} className="relative min-h-[170vh]">
-            <div className="sticky top-0 h-screen overflow-hidden">
+            <div className="relative sticky top-0 h-screen overflow-hidden">
               <motion.div
                 className="absolute inset-0 z-0 origin-center overflow-hidden border border-white/10 shadow-[0_30px_90px_rgba(0,0,0,0.36)] transform-gpu [contain:layout_paint_style] [will-change:transform]"
                 style={{
@@ -784,7 +795,7 @@ function LuxuryExperienceScene() {
                   asset={heroVideo}
                   priority
                   playMode="hero"
-                  overlayClassName="bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_24%),linear-gradient(180deg,rgba(0,0,0,0.08),transparent_34%,rgba(0,0,0,0.82))]"
+                  overlayClassName={`bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_24%)] ${BASE_MEDIA_OVERLAY}`}
                 />
               </motion.div>
 
@@ -811,8 +822,8 @@ function LuxuryExperienceScene() {
 
                 <div className="grid items-end gap-14 pb-14 pt-24 lg:grid-cols-[1.15fr_0.85fr]">
                   <div className="space-y-8 lg:col-span-2">
-  <AnimatedText as="h1" className="max-w-4xl font-[family:var(--font-display)] text-[clamp(2.4rem,5vw,4.2rem)] font-light leading-[1.3] tracking-wide text-white/95 drop-shadow-md">
-    It doesn’t feel like entering a mall.<br/><span className="text-white/60">It feels like stepping into a world that was waiting for you.</span>
+  <AnimatedText as="h1" className="max-w-4xl font-[family:var(--font-display)] text-[clamp(2.4rem,5vw,4.2rem)] font-normal leading-[1.3] tracking-wide text-white drop-shadow-md">
+    It doesn’t feel like entering a mall.<br/><span className="text-white/74">It feels like stepping into a world that was waiting for you.</span>
   </AnimatedText>
 </div>
 
@@ -830,37 +841,40 @@ function LuxuryExperienceScene() {
             </div>
           </section>
 
-          <section className="relative z-10 px-4 py-16 sm:px-8 lg:px-12 [content-visibility:auto] [contain-intrinsic-size:920px]">
+          <section ref={deviceSectionRef} className="relative z-10 px-4 py-16 sm:px-8 lg:px-12 [content-visibility:auto] [contain-intrinsic-size:920px]">
             <AmbientGrid opacity="opacity-40" />
             <div className="mx-auto grid max-w-[1800px] items-center gap-8 lg:grid-cols-[0.94fr_1.06fr]">
               <div className="relative min-h-[62vh] overflow-hidden rounded-[2.4rem] border border-white/10 bg-[#050505] shadow-[0_28px_80px_rgba(0,0,0,0.46)]">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.04),transparent_20%,transparent_80%,rgba(255,255,255,0.08))]" />
                 <div className="absolute inset-0 flex items-center justify-center p-8 sm:p-12 xl:p-16">
-                  <motion.img 
-                    src="/assets/macbookimage.jpg" 
-                    alt="Macbook Display" 
-                    className="h-full w-full object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.4)]"
-                    initial={{ opacity: 0, scale: 0.95, filter: 'blur(8px)' }}
-                    whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                  <motion.img
+                    src="/assets/macbookimage.jpg"
+                    alt="Mall experience display"
+                    className="relative h-full w-full object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.4)] [will-change:transform]"
+                    initial={{ opacity: 0, scale: 0.95, y: 18 }}
+                    whileInView={{ opacity: 1, scale: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.4 }}
                     transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
                     style={{
-                       y: useTransform(scrollYProgress, [0, 1], ["-4%", "4%"])
+                      y: deviceImageY,
                     }}
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
+                <div className={`absolute inset-0 ${BASE_MEDIA_OVERLAY}`} />
               </div>
 
               <div className="relative flex h-full items-center px-4 py-8 sm:px-8 lg:px-10">
-                <AnimatedText as="h2" className="max-w-3xl font-[family:var(--font-display)] text-[clamp(2rem,4vw,3.4rem)] font-light leading-[1.4] tracking-wide text-white/95 drop-shadow-sm">
-  There are no breaks here. No pauses.<br/><span className="text-white/60 block mt-2">Just a space that moves with you.</span>
-</AnimatedText>
+                <AnimatedText as="h2" className="max-w-3xl font-[family:var(--font-display)] text-[clamp(2rem,4vw,3.4rem)] font-normal leading-[1.4] tracking-wide text-white drop-shadow-sm">
+                  There are no breaks here. No pauses.<br /><span className="mt-2 block text-white/72">Just a space that moves with you.</span>
+                </AnimatedText>
               </div>
             </div>
           </section>
 
           <section ref={atriumRef} className="relative min-h-[152vh]">
-            <div className="sticky top-0 h-screen overflow-hidden">
+            <div className="relative sticky top-0 h-screen overflow-hidden">
               <motion.div
                 className="absolute inset-0 origin-center overflow-hidden border border-white/10 shadow-[0_30px_90px_rgba(0,0,0,0.36)] transform-gpu [contain:layout_paint_style] [will-change:transform]"
                 style={{
@@ -873,7 +887,7 @@ function LuxuryExperienceScene() {
                 <VideoSurface
                   asset={atriumVideo}
                   playMode="visible"
-                  overlayClassName="bg-[linear-gradient(180deg,rgba(0,0,0,0.18),rgba(0,0,0,0.78))]"
+                  overlayClassName={BASE_MEDIA_OVERLAY}
                 />
               </motion.div>
 
@@ -899,7 +913,7 @@ function LuxuryExperienceScene() {
                 style={{ y: atriumTextY, opacity: atriumTextOpacity }}
               >
                 <div className="pb-14 flex items-center h-full">
-  <AnimatedText as="h2" className="font-[family:var(--font-display)] text-[clamp(1.8rem,3.8vw,3.2rem)] font-light leading-[1.4] tracking-wide text-white/80">
+  <AnimatedText as="h2" className="font-[family:var(--font-display)] text-[clamp(1.8rem,3.8vw,3.2rem)] font-medium leading-[1.4] tracking-wide text-white/92">
     A world in motion.
   </AnimatedText>
 </div>
@@ -933,7 +947,7 @@ function LuxuryExperienceScene() {
                       <span>Scene Shift</span>
                     </div>
                     <div className="relative space-y-4">
-  <AnimatedText as="h2" className="font-[family:var(--font-display)] text-[clamp(1.8rem,3.8vw,3.2rem)] font-light leading-[1.4] tracking-wide text-white/80">
+  <AnimatedText as="h2" className="font-[family:var(--font-display)] text-[clamp(1.8rem,3.8vw,3.2rem)] font-medium leading-[1.4] tracking-wide text-white/92">
     Every path unfolds.
   </AnimatedText>
 </div>
@@ -957,7 +971,7 @@ function LuxuryExperienceScene() {
               </motion.div>
 
               <motion.div
-                className="absolute left-1/2 top-1/2 z-0 h-[82vh] w-[82vh] max-h-[90vw] max-w-[90vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden border border-white/12 bg-black/80 shadow-[0_24px_72px_rgba(0,0,0,0.42)]"
+                className="absolute left-1/2 top-1/2 z-0 h-[82vh] w-[82vh] max-h-[90vw] max-w-[90vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden border border-white/12 bg-black/80 shadow-[0_24px_72px_rgba(0,0,0,0.42)] [will-change:transform,opacity]"
                 style={{
                   scale: electronicsPortalScale,
                   opacity: electronicsPortalOpacity,
@@ -965,13 +979,12 @@ function LuxuryExperienceScene() {
                   y: electronicsPortalY,
                 }}
               >
-                <VideoSurface asset={electronicsVideo} playMode="visible" />
-                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.1),rgba(0,0,0,0.74))]" />
+                <VideoSurface asset={electronicsVideo} playMode="visible" overlayClassName={BASE_MEDIA_OVERLAY} />
               </motion.div>
 
               <div className="relative z-10 mx-auto grid h-full w-full max-w-[1800px] items-center gap-10 px-6 sm:px-10 lg:grid-cols-[0.95fr_1.05fr] lg:px-16">
                 <div className="space-y-6">
-  <AnimatedText as="h2" className="font-[family:var(--font-display)] text-[clamp(1.8rem,3.8vw,3.2rem)] font-light leading-[1.4] tracking-wide text-white/80">
+  <AnimatedText as="h2" className="font-[family:var(--font-display)] text-[clamp(1.8rem,3.8vw,3.2rem)] font-medium leading-[1.4] tracking-wide text-white/92">
     Perspective changes.
   </AnimatedText>
 </div>
@@ -987,7 +1000,7 @@ function LuxuryExperienceScene() {
               <article className="relative min-h-[72vh] overflow-hidden rounded-[2.5rem] border border-white/10">
                 <VideoSurface asset={appleStoreVideo} playMode="visible" />
                 <div className="relative flex h-full flex-col justify-between p-8 sm:p-10 lg:p-12">
-  <AnimatedText as="h3" className="mt-auto max-w-2xl font-[family:var(--font-display)] text-[clamp(1.8rem,3.8vw,3.2rem)] font-light leading-[1.4] tracking-wide text-white/90">
+  <AnimatedText as="h3" className="mt-auto max-w-2xl font-[family:var(--font-display)] text-[clamp(1.8rem,3.8vw,3.2rem)] font-medium leading-[1.4] tracking-wide text-white/95">
     Light. Glass. Precision.
   </AnimatedText>
                   
@@ -1029,7 +1042,7 @@ function LuxuryExperienceScene() {
               </motion.div>
 
               <motion.div
-                className="absolute inset-0 overflow-hidden border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.46)]"
+                className="absolute inset-0 overflow-hidden border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.46)] [will-change:transform,opacity]"
                 style={{
                   scale: diningWorldScale,
                   opacity: diningWorldOpacity,
@@ -1037,14 +1050,14 @@ function LuxuryExperienceScene() {
                   y: diningWorldY,
                 }}
               >
-                <VideoSurface asset={restaurantVideo} playMode="visible" />
+                <VideoSurface asset={restaurantVideo} playMode="visible" overlayClassName={BASE_MEDIA_OVERLAY} />
               </motion.div>
 
               <div className="relative z-10 mx-auto grid h-full w-full max-w-[1800px] items-center gap-8 px-6 sm:px-10 lg:grid-cols-[1.04fr_0.96fr] lg:px-16">
                 <PlateScene progress={diningProgress} />
                 <div className="space-y-6 flex h-full items-center">
-                  <AnimatedText as="h2" className="max-w-3xl font-[family:var(--font-display)] text-[clamp(2.2rem,4.5vw,3.6rem)] font-light leading-[1.4] tracking-wide text-white/95">
-  The world slows down.<br/><span className="text-white/60 block mt-2">You’re arriving.</span>
+                  <AnimatedText as="h2" className="max-w-3xl font-[family:var(--font-display)] text-[clamp(2.2rem,4.5vw,3.6rem)] font-normal leading-[1.4] tracking-wide text-white">
+  The world slows down.<br/><span className="text-white/74 block mt-2">You’re arriving.</span>
 </AnimatedText>
                 </div>
               </div>
@@ -1058,8 +1071,8 @@ function LuxuryExperienceScene() {
                 <VideoSurface asset={restaurantPlatingVideo} playMode="visible" />
                 <div className="relative flex h-full flex-col justify-between p-8 sm:p-10 lg:p-12">
                   <div className="flex h-full items-center">
-                    <AnimatedText as="h3" className="max-w-3xl font-[family:var(--font-display)] text-[clamp(2.2rem,4.5vw,3.6rem)] font-light leading-[1.4] tracking-wide text-white/95">
-  Light softens. Conversations fade in.<br/><span className="text-white/60 block mt-2">The space shifts to experience.</span>
+                    <AnimatedText as="h3" className="max-w-3xl font-[family:var(--font-display)] text-[clamp(2.2rem,4.5vw,3.6rem)] font-normal leading-[1.4] tracking-wide text-white">
+  Light softens. Conversations fade in.<br/><span className="text-white/74 block mt-2">The space shifts to experience.</span>
 </AnimatedText>
                   </div>
                 </div>
@@ -1086,8 +1099,8 @@ function LuxuryExperienceScene() {
             <AmbientGrid opacity="opacity-30" />
             <div className="mx-auto max-w-[1800px] space-y-12">
               <div className="space-y-5">
-                <AnimatedText as="h2" className="max-w-3xl font-[family:var(--font-display)] text-[clamp(2.4rem,5vw,4.2rem)] font-light leading-[1.4] tracking-wide text-white/95">
-  Everything connects.<br/><span className="text-white/60 block mt-2">A place that never feels empty.</span>
+                <AnimatedText as="h2" className="max-w-3xl font-[family:var(--font-display)] text-[clamp(2.4rem,5vw,4.2rem)] font-normal leading-[1.4] tracking-wide text-white">
+  Everything connects.<br/><span className="text-white/74 block mt-2">A place that never feels empty.</span>
 </AnimatedText>
               </div>
               <div className="relative min-h-[46vh] overflow-hidden rounded-[2.6rem] border border-white/10">

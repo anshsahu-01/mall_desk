@@ -1,40 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-
-const playbackChannels: {
-  visible: HTMLVideoElement | null;
-  hover: HTMLVideoElement | null;
-} = {
-  visible: null,
-  hover: null,
-};
-
-function claimPlaybackChannel(
-  channel: keyof typeof playbackChannels,
-  video: HTMLVideoElement,
-) {
-  const current = playbackChannels[channel];
-
-  if (current && current !== video) {
-    current.pause();
-  }
-
-  playbackChannels[channel] = video;
-}
-
-function releasePlaybackChannel(
-  channel: keyof typeof playbackChannels,
-  video: HTMLVideoElement,
-) {
-  if (playbackChannels[channel] === video) {
-    playbackChannels[channel] = null;
-  }
-}
 
 type CinematicVideoProps = {
   src: string;
   label: string;
+  poster: string;
   className?: string;
   priority?: boolean;
   overlayClassName?: string;
@@ -45,6 +17,7 @@ type CinematicVideoProps = {
 export function CinematicVideo({
   src,
   label,
+  poster,
   className,
   priority = false,
   overlayClassName,
@@ -55,6 +28,7 @@ export function CinematicVideo({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [shouldLoad, setShouldLoad] = useState(priority);
   const [isVisible, setIsVisible] = useState(priority);
+  const [hasEnteredViewport, setHasEnteredViewport] = useState(priority);
   const [isReady, setIsReady] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [canHover] = useState(
@@ -75,15 +49,9 @@ export function CinematicVideo({
           if (entry.isIntersecting) {
             setShouldLoad(true);
             setIsVisible(true);
+            setHasEnteredViewport(true);
           } else {
             setIsVisible(false);
-            if (
-              entry.boundingClientRect.top > window.innerHeight * 1.5 ||
-              entry.boundingClientRect.bottom < -window.innerHeight * 1.5
-            ) {
-              setShouldLoad(false);
-              setIsReady(false);
-            }
           }
         });
       },
@@ -102,16 +70,7 @@ export function CinematicVideo({
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) {
-      return;
-    }
-
-    if (!shouldLoad) {
-      video.pause();
-      releasePlaybackChannel("visible", video);
-      releasePlaybackChannel("hover", video);
-      video.removeAttribute("src");
-      video.load();
+    if (!video || !shouldLoad) {
       return;
     }
 
@@ -119,32 +78,20 @@ export function CinematicVideo({
       playMode === "hero"
         ? isVisible
         : playMode === "hover"
-          ? canHover && isVisible && isHovered
+          ? isVisible && (canHover ? isHovered : true)
           : isVisible;
 
     if (shouldPlay) {
-      if (playMode === "visible") {
-        claimPlaybackChannel("visible", video);
-      }
-
-      if (playMode === "hover") {
-        claimPlaybackChannel("hover", video);
-      }
-
       const playPromise = video.play();
       if (playPromise) {
         void playPromise.catch(() => {});
       }
     } else {
       video.pause();
-      releasePlaybackChannel("visible", video);
-      releasePlaybackChannel("hover", video);
     }
 
     return () => {
       video.pause();
-      releasePlaybackChannel("visible", video);
-      releasePlaybackChannel("hover", video);
     };
   }, [canHover, isHovered, isVisible, playMode, shouldLoad]);
 
@@ -157,13 +104,35 @@ export function CinematicVideo({
       onFocus={() => setIsHovered(true)}
       onBlur={() => setIsHovered(false)}
     >
+      {/* Poster / placeholder — visible until video is ready */}
       <div
-        className={`absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1),transparent_30%),linear-gradient(to_bottom,rgba(0,0,0,0.6),rgba(0,0,0,0.2))] ${
+        className={`absolute inset-0 ${
           posterClassName ?? ""
-        } ${isReady ? "opacity-0" : "opacity-100"} transition-opacity duration-500`}
+        } ${isReady ? "opacity-0" : "opacity-100"} transition-opacity duration-700`}
       >
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),transparent_22%,rgba(0,0,0,0.4))]" />
-        <div className="absolute bottom-6 left-6 max-w-[60%] text-[10px] uppercase tracking-[0.34em] text-white/30">
+        <Image
+          src={poster}
+          alt=""
+          aria-hidden="true"
+          fill
+          sizes="100vw"
+          className="object-cover opacity-70"
+        />
+        {/* Cinematic gradient placeholder */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(255,255,255,0.06),transparent_50%),linear-gradient(180deg,rgba(0,0,0,0.7)_0%,rgba(5,5,5,1)_60%,rgba(0,0,0,0.9)_100%)]" />
+
+        {/* Subtle shimmer animation */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: "linear-gradient(90deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%)",
+            backgroundSize: "200% 100%",
+            animation: "shimmer 2.5s ease-in-out infinite",
+          }}
+        />
+
+        {/* Label */}
+        <div className="absolute bottom-6 left-6 max-w-[60%] text-[10px] uppercase tracking-[0.34em] text-white/20">
           {label}
         </div>
       </div>
@@ -171,17 +140,26 @@ export function CinematicVideo({
       {shouldLoad ? (
         <video
           ref={videoRef}
-          className="h-full w-full object-cover [transform:translateZ(0)]"
+          className={`h-full w-full object-cover [transform:translateZ(0)] transition-opacity duration-700 ${isReady ? "opacity-100" : "opacity-0"}`}
           aria-label={label}
           autoPlay={playMode === "hero"}
           muted
           loop
           playsInline
+          poster={poster}
           preload={playMode === "hero" ? "auto" : "metadata"}
           disablePictureInPicture
           controlsList="nodownload noplaybackrate nofullscreen"
           src={src}
+          onLoadedData={() => {
+            console.log("Video loaded:", src);
+            setIsReady(true);
+          }}
           onCanPlay={() => setIsReady(true)}
+          onError={(e) => {
+            console.error("Video error:", src, e);
+            setIsReady(false);
+          }}
         />
       ) : null}
 
@@ -192,9 +170,9 @@ export function CinematicVideo({
         }`}
       />
 
-      {playMode === "hover" ? (
+      {playMode === "hover" && hasEnteredViewport ? (
         <div className="pointer-events-none absolute bottom-5 right-5 text-[10px] uppercase tracking-[0.34em] text-white/36">
-          Hover To Play
+          {canHover ? "Hover To Play" : "Tap To Explore"}
         </div>
       ) : null}
     </div>

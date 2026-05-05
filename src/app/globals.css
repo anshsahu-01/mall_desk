@@ -6,6 +6,12 @@
   --surface: #0b0b0c;
   --muted: rgba(245, 242, 234, 0.64);
   --line: rgba(255, 255, 255, 0.12);
+  --brand-accent: #C9A96E;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 @theme inline {

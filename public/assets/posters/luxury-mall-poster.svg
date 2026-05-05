@@ -1,0 +1,31 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" fill="#050505"/>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect x="96" y="96" width="1408" height="708" rx="40" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+  <path d="M1600 0H0V900H1600V0Z" fill="url(#vignette)"/>
+  <circle cx="372" cy="236" r="280" fill="url(#glowA)"/>
+  <circle cx="1184" cy="654" r="320" fill="url(#glowB)"/>
+  <g opacity="0.88">
+    <text x="128" y="680" fill="#F5F2EA" font-family="Cormorant Garamond, serif" font-size="118" letter-spacing="2">Mall Desk</text>
+    <text x="132" y="744" fill="rgba(245,242,234,0.58)" font-family="Arial, sans-serif" font-size="26" letter-spacing="10">CINEMATIC LUXURY EXPERIENCE</text>
+  </g>
+  <defs>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(372 236) rotate(90) scale(280)">
+      <stop stop-color="#D6B27B" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#D6B27B" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1184 654) rotate(90) scale(320)">
+      <stop stop-color="#7CA3C9" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#7CA3C9" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bg" x1="192" y1="96" x2="1408" y2="804" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#111214"/>
+      <stop offset="0.52" stop-color="#050505"/>
+      <stop offset="1" stop-color="#0B0B0C"/>
+    </linearGradient>
+    <radialGradient id="vignette" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(800 450) rotate(90) scale(520 900)">
+      <stop offset="0.62" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.74"/>
+    </radialGradient>
+  </defs>
+</svg>

@@ -29,6 +29,9 @@ export function SmoothScrollProvider({
     lenisRef.current = lenis;
     lenis.on("scroll", ScrollTrigger.update);
     ScrollTrigger.defaults({ anticipatePin: 1 });
+    
+    const resizeHandler = () => lenis.resize();
+    ScrollTrigger.addEventListener("refresh", resizeHandler);
 
     const update = (time: number) => {
       lenis.raf(time * 1000);
@@ -36,7 +39,14 @@ export function SmoothScrollProvider({
 
     gsap.ticker.add(update);
 
+    // Delay refresh to allow child components to register their ScrollTriggers
+    const refreshTimer = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 120);
+
     return () => {
+      clearTimeout(refreshTimer);
+      ScrollTrigger.removeEventListener("refresh", resizeHandler);
       gsap.ticker.remove(update);
       lenis.off("scroll", ScrollTrigger.update);
       lenis.destroy();

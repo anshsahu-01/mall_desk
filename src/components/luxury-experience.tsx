@@ -17,18 +17,21 @@ import { CinematicVideo } from "@/components/media/cinematic-video";
 import { CinematicPreloader } from "@/components/ui/cinematic-preloader";
 import { AmbientStrokes } from "@/components/ui/ambient-strokes";
 
-const MacbookShowroom = dynamic(
-  () =>
-    import("@/components/three/macbook-showroom").then(
-      (module) => module.MacbookShowroom,
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(255,255,255,0.18),transparent_28%),linear-gradient(180deg,#080808,#030303)]" />
-    ),
-  },
-);
+
+function AnimatedText({ children, className, as: Component = "div" }: { children: React.ReactNode, className?: string, as?: any }) {
+  const MotionComponent = motion(Component as any);
+  return (
+    <MotionComponent
+      initial={{ opacity: 0, y: 16, filter: 'blur(4px)' }}
+      whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      viewport={{ once: true, amount: 0.4 }}
+      transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+      className={className}
+    >
+      {children}
+    </MotionComponent>
+  );
+}
 
 type VideoAsset = {
   src: string;
@@ -431,11 +434,13 @@ function PlateScene({ progress }: { progress: MotionValue<number> }) {
         style={{ scale: diningRevealScale, opacity: diningRevealOpacity }}
       >
         <div className="absolute left-1/2 top-1/2 h-[34rem] w-[34rem] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full">
-          <VideoSurface
-            asset={restaurantVideo}
-            playMode="visible"
-            overlayClassName="bg-[linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.24))]"
-          />
+          <motion.div animate={{ y: ["-0.5%", "0.5%"] }} transition={{ duration: 8, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} className="absolute inset-0">
+            <VideoSurface
+              asset={restaurantVideo}
+              playMode="visible"
+              overlayClassName="bg-[linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.24))]"
+            />
+          </motion.div>
         </div>
       </motion.div>
 
@@ -445,49 +450,91 @@ function PlateScene({ progress }: { progress: MotionValue<number> }) {
         style={{ opacity: shadowOpacity, scale: plateScale }}
       />
 
+      {/* Master 3D Transform Group for Plate and Cutlery */}
       <motion.div
-        className="absolute left-1/2 top-1/2 h-[30rem] w-[30rem] -translate-x-1/2 -translate-y-1/2 transform-style-3d"
+        className="absolute left-1/2 top-1/2 h-0 w-0 transform-style-3d"
         style={{ scale: plateScale, y: plateY, opacity: plateOpacity, rotateX: plateRotateX, rotateY: plateRotateY }}
       >
-        {/* Outer Rim */}
-        <motion.div 
-          className="absolute inset-0 rounded-full border border-white/40 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),inset_0_-8px_12px_rgba(0,0,0,0.2),0_40px_80px_rgba(0,0,0,0.6)]"
-          style={{ background: `radial-gradient(circle at ${lightShift} ${lightShift}, #ffffff, #f0f0f0 40%, #cccccc 75%, #888888)` }}
-        >
-          {/* Subtle texture/noise overlay */}
-          <div className="absolute inset-0 opacity-10 mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
-        </motion.div>
-        
-        {/* Inner Curve */}
-        <div className="absolute inset-[13%] rounded-full border border-black/10 shadow-[inset_0_8px_16px_rgba(0,0,0,0.1),inset_0_-2px_4px_rgba(255,255,255,0.5)]">
+        {/* Plate */}
+        <div className="absolute left-1/2 top-1/2 h-[30rem] w-[30rem] -translate-x-1/2 -translate-y-1/2 transform-style-3d">
+          {/* Outer Rim */}
           <motion.div 
-            className="absolute inset-0 rounded-full"
-            style={{ background: `radial-gradient(circle at ${lightShift} ${lightShift}, #fcfcfc, #e2e2e2 65%, #bbbbbb)` }}
-          />
-        </div>
-
-        {/* Center Well */}
-        <div className="absolute inset-[31%] overflow-hidden rounded-full border border-black/15 shadow-[inset_0_12px_24px_rgba(0,0,0,0.15)]">
-          <motion.div
-            className="absolute inset-0"
-            style={{ scale: diningRevealScale, opacity: diningRevealOpacity }}
+            className="absolute inset-0 rounded-full border border-white/40 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),inset_0_-8px_12px_rgba(0,0,0,0.2),0_40px_80px_rgba(0,0,0,0.6)]"
+            style={{ background: useTransform(lightShift, v => `radial-gradient(circle at ${v} ${v}, #ffffff, #f0f0f0 40%, #cccccc 75%, #888888)`) }}
           >
-            <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,213,163,0.95),rgba(255,127,80,0.42)_38%,rgba(0,0,0,0)_72%)]" />
+            <div className="absolute inset-0 opacity-10 mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
           </motion.div>
+          
+          {/* Inner Curve */}
+          <div className="absolute inset-[13%] rounded-full border border-black/10 shadow-[inset_0_8px_16px_rgba(0,0,0,0.1),inset_0_-2px_4px_rgba(255,255,255,0.5)]">
+            <motion.div 
+              className="absolute inset-0 rounded-full"
+              style={{ background: useTransform(lightShift, v => `radial-gradient(circle at ${v} ${v}, #fcfcfc, #e2e2e2 65%, #bbbbbb)`) }}
+            />
+          </div>
+
+          {/* Center Well */}
+          <div className="absolute inset-[31%] overflow-hidden rounded-full border border-black/15 shadow-[inset_0_12px_24px_rgba(0,0,0,0.15)]">
+            <motion.div
+              className="absolute inset-0"
+              style={{ scale: diningRevealScale, opacity: diningRevealOpacity }}
+            >
+              <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,213,163,0.95),rgba(255,127,80,0.42)_38%,rgba(0,0,0,0)_72%)]" />
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Fork (Left side) */}
+        <div className="absolute right-[16rem] top-1/2 h-[18rem] w-6 -translate-y-1/2 opacity-70">
+          <svg viewBox="0 0 40 300" className="w-full h-full drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
+            <defs>
+              <linearGradient id="silver-fork" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ffffff" />
+                <stop offset="30%" stopColor="#d8d8d8" />
+                <stop offset="70%" stopColor="#8c8c8c" />
+                <stop offset="100%" stopColor="#505050" />
+              </linearGradient>
+            </defs>
+            <path d="M10,10 L10,60 C10,80 20,90 20,120 L20,280 C20,295 16,300 16,300 C16,300 24,300 24,300 C24,300 20,295 20,280 L20,120 C20,90 30,80 30,60 L30,10 C30,5 26,5 26,10 L26,50 C26,55 24,55 24,50 L24,10 C24,5 20,5 20,10 L20,50 C20,55 18,55 18,50 L18,10 C18,5 14,5 14,10 L14,50 C14,55 12,55 12,50 L12,10 C12,5 10,5 10,10 Z" fill="url(#silver-fork)"/>
+          </svg>
+        </div>
+
+        {/* Knife (Right side, inner) */}
+        <div className="absolute left-[16rem] top-1/2 h-[18rem] w-4 -translate-y-1/2 opacity-70">
+          <svg viewBox="0 0 30 300" className="w-full h-full drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
+            <defs>
+              <linearGradient id="silver-knife" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ffffff" />
+                <stop offset="40%" stopColor="#e0e0e0" />
+                <stop offset="80%" stopColor="#999999" />
+                <stop offset="100%" stopColor="#444444" />
+              </linearGradient>
+            </defs>
+            <path d="M15,120 L15,280 C15,295 12,300 12,300 C12,300 18,300 18,300 C18,300 15,295 15,280 L15,120 C15,90 25,70 25,20 C25,5 20,0 15,0 C15,0 15,80 15,120 Z" fill="url(#silver-knife)"/>
+          </svg>
+        </div>
+
+        {/* Spoon (Right side, outer) */}
+        <div className="absolute left-[18rem] top-1/2 h-[18rem] w-6 -translate-y-1/2 opacity-70">
+          <svg viewBox="0 0 40 300" className="w-full h-full drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
+            <defs>
+              <linearGradient id="silver-spoon" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ffffff" />
+                <stop offset="35%" stopColor="#d0d0d0" />
+                <stop offset="75%" stopColor="#7a7a7a" />
+                <stop offset="100%" stopColor="#3a3a3a" />
+              </linearGradient>
+              <linearGradient id="silver-spoon-bowl" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#a0a0a0" />
+                <stop offset="50%" stopColor="#e0e0e0" />
+                <stop offset="100%" stopColor="#ffffff" />
+              </linearGradient>
+            </defs>
+            <path d="M20,120 L20,280 C20,295 16,300 16,300 C16,300 24,300 24,300 C24,300 20,295 20,280 L20,120 C20,90 26,80 26,60 C26,20 34,0 20,0 C6,0 14,20 14,60 C14,80 20,90 20,120 Z" fill="url(#silver-spoon)"/>
+            <ellipse cx="20" cy="35" rx="9" ry="25" fill="url(#silver-spoon-bowl)" opacity="0.9" />
+          </svg>
         </div>
       </motion.div>
-
-      {/* Silverware */}
-      <motion.div className="absolute left-[18%] top-1/2 h-[22rem] w-8 -translate-y-1/2 rounded-full shadow-[0_24px_40px_rgba(0,0,0,0.4),inset_0_2px_4px_rgba(255,255,255,0.8)]" style={{ background: `linear-gradient(135deg, #ffffff, #d4d4d4 50%, #9e9e9e)`, rotateX: plateRotateX }}>
-        <div className="absolute inset-[1px] rounded-full opacity-20 mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
-      </motion.div>
-      <motion.div className="absolute left-[17.6%] top-[23%] flex gap-[5px]" style={{ rotateX: plateRotateX }}>
-        {[0, 1, 2, 3].map((item) => (
-          <span key={item} className="h-16 w-[4px] rounded-full bg-white/95 shadow-[0_4px_8px_rgba(0,0,0,0.2)]" />
-        ))}
-      </motion.div>
-      <motion.div className="absolute right-[18%] top-1/2 h-[22rem] w-3 -translate-y-1/2 rounded-full shadow-[0_24px_40px_rgba(0,0,0,0.4),inset_0_2px_4px_rgba(255,255,255,0.8)]" style={{ background: `linear-gradient(135deg, #ffffff, #d4d4d4 50%, #9e9e9e)`, rotateX: plateRotateX }} />
-      <motion.div className="absolute right-[17.1%] top-[22%] h-24 w-14 rounded-t-full rounded-b-[1.2rem] shadow-[0_12px_24px_rgba(0,0,0,0.3),inset_0_2px_4px_rgba(255,255,255,0.8)]" style={{ background: `linear-gradient(135deg, #ffffff, #d4d4d4 50%, #9e9e9e)`, rotateX: plateRotateX }} />
     </div>
   );
 }
@@ -764,10 +811,10 @@ function LuxuryExperienceScene() {
 
                 <div className="grid items-end gap-14 pb-14 pt-24 lg:grid-cols-[1.15fr_0.85fr]">
                   <div className="space-y-8 lg:col-span-2">
-                    <h1 className="max-w-6xl font-[family:var(--font-display)] text-[clamp(4.8rem,16vw,10rem)] leading-[0.9] tracking-[-0.05em] text-white drop-shadow-lg">
-                      It doesn’t feel like entering a mall.<br/>It feels like stepping into a world that was waiting for you.
-                    </h1>
-                  </div>
+  <AnimatedText as="h1" className="max-w-4xl font-[family:var(--font-display)] text-[clamp(2.4rem,5vw,4.2rem)] font-light leading-[1.3] tracking-wide text-white/95 drop-shadow-md">
+    It doesn’t feel like entering a mall.<br/><span className="text-white/60">It feels like stepping into a world that was waiting for you.</span>
+  </AnimatedText>
+</div>
 
                   <div className="space-y-10 lg:justify-self-end">
 
@@ -788,15 +835,26 @@ function LuxuryExperienceScene() {
             <div className="mx-auto grid max-w-[1800px] items-center gap-8 lg:grid-cols-[0.94fr_1.06fr]">
               <div className="relative min-h-[62vh] overflow-hidden rounded-[2.4rem] border border-white/10 bg-[#050505] shadow-[0_28px_80px_rgba(0,0,0,0.46)]">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.04),transparent_20%,transparent_80%,rgba(255,255,255,0.08))]" />
-                <DeferredRender className="absolute inset-0">
-                  <MacbookShowroom progress={scrollYProgress} />
-                </DeferredRender>
+                <div className="absolute inset-0 flex items-center justify-center p-8 sm:p-12 xl:p-16">
+                  <motion.img 
+                    src="/assets/macbookimage.jpg" 
+                    alt="Macbook Display" 
+                    className="h-full w-full object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.4)]"
+                    initial={{ opacity: 0, scale: 0.95, filter: 'blur(8px)' }}
+                    whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                    viewport={{ once: true, amount: 0.4 }}
+                    transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                       y: useTransform(scrollYProgress, [0, 1], ["-4%", "4%"])
+                    }}
+                  />
+                </div>
               </div>
 
               <div className="relative flex h-full items-center px-4 py-8 sm:px-8 lg:px-10">
-                <h2 className="max-w-4xl font-[family:var(--font-display)] text-[clamp(3.4rem,8vw,7.2rem)] leading-[0.9] tracking-[-0.04em] text-white drop-shadow-md">
-                  There are no breaks here.<br/>No pauses.<br/>Just a space that moves with you, as if it already knows where you're going.
-                </h2>
+                <AnimatedText as="h2" className="max-w-3xl font-[family:var(--font-display)] text-[clamp(2rem,4vw,3.4rem)] font-light leading-[1.4] tracking-wide text-white/95 drop-shadow-sm">
+  There are no breaks here. No pauses.<br/><span className="text-white/60 block mt-2">Just a space that moves with you.</span>
+</AnimatedText>
               </div>
             </div>
           </section>
@@ -840,7 +898,11 @@ function LuxuryExperienceScene() {
                 className="relative mx-auto flex h-full w-full max-w-[1800px] flex-col justify-between px-6 py-10 sm:px-10 lg:px-16"
                 style={{ y: atriumTextY, opacity: atriumTextOpacity }}
               >
-                <div className="pb-14"></div>
+                <div className="pb-14 flex items-center h-full">
+  <AnimatedText as="h2" className="font-[family:var(--font-display)] text-[clamp(1.8rem,3.8vw,3.2rem)] font-light leading-[1.4] tracking-wide text-white/80">
+    A world in motion.
+  </AnimatedText>
+</div>
               </motion.div>
             </div>
           </section>
@@ -870,7 +932,11 @@ function LuxuryExperienceScene() {
                       <span>{panel.index}</span>
                       <span>Scene Shift</span>
                     </div>
-                    <div className="relative space-y-4"></div>
+                    <div className="relative space-y-4">
+  <AnimatedText as="h2" className="font-[family:var(--font-display)] text-[clamp(1.8rem,3.8vw,3.2rem)] font-light leading-[1.4] tracking-wide text-white/80">
+    Every path unfolds.
+  </AnimatedText>
+</div>
                   </article>
                 ))}
               </div>
@@ -904,7 +970,11 @@ function LuxuryExperienceScene() {
               </motion.div>
 
               <div className="relative z-10 mx-auto grid h-full w-full max-w-[1800px] items-center gap-10 px-6 sm:px-10 lg:grid-cols-[0.95fr_1.05fr] lg:px-16">
-                <div className="space-y-6"></div>
+                <div className="space-y-6">
+  <AnimatedText as="h2" className="font-[family:var(--font-display)] text-[clamp(1.8rem,3.8vw,3.2rem)] font-light leading-[1.4] tracking-wide text-white/80">
+    Perspective changes.
+  </AnimatedText>
+</div>
 
                 <RobotFigure progress={robotProgress} />
               </div>
@@ -917,6 +987,9 @@ function LuxuryExperienceScene() {
               <article className="relative min-h-[72vh] overflow-hidden rounded-[2.5rem] border border-white/10">
                 <VideoSurface asset={appleStoreVideo} playMode="visible" />
                 <div className="relative flex h-full flex-col justify-between p-8 sm:p-10 lg:p-12">
+  <AnimatedText as="h3" className="mt-auto max-w-2xl font-[family:var(--font-display)] text-[clamp(1.8rem,3.8vw,3.2rem)] font-light leading-[1.4] tracking-wide text-white/90">
+    Light. Glass. Precision.
+  </AnimatedText>
                   
                 </div>
               </article>
@@ -970,12 +1043,9 @@ function LuxuryExperienceScene() {
               <div className="relative z-10 mx-auto grid h-full w-full max-w-[1800px] items-center gap-8 px-6 sm:px-10 lg:grid-cols-[1.04fr_0.96fr] lg:px-16">
                 <PlateScene progress={diningProgress} />
                 <div className="space-y-6 flex h-full items-center">
-                  <motion.h2
-                    className="max-w-4xl font-[family:var(--font-display)] text-[clamp(3rem,7vw,6.4rem)] leading-[0.9] tracking-[-0.05em] text-white drop-shadow-md"
-                    style={{ opacity: diningTextOpacity }}
-                  >
-                    The world slows down.<br/>A table appears.<br/>And suddenly, you’re not exploring anymore — you’re arriving.
-                  </motion.h2>
+                  <AnimatedText as="h2" className="max-w-3xl font-[family:var(--font-display)] text-[clamp(2.2rem,4.5vw,3.6rem)] font-light leading-[1.4] tracking-wide text-white/95">
+  The world slows down.<br/><span className="text-white/60 block mt-2">You’re arriving.</span>
+</AnimatedText>
                 </div>
               </div>
             </div>
@@ -988,9 +1058,9 @@ function LuxuryExperienceScene() {
                 <VideoSurface asset={restaurantPlatingVideo} playMode="visible" />
                 <div className="relative flex h-full flex-col justify-between p-8 sm:p-10 lg:p-12">
                   <div className="flex h-full items-center">
-                    <h3 className="max-w-3xl font-[family:var(--font-display)] text-[clamp(3.2rem,6vw,6.4rem)] leading-[0.9] tracking-[-0.04em] text-white drop-shadow-md">
-                      Light softens. Conversations fade in.<br/>The space shifts from spectacle… to experience.
-                    </h3>
+                    <AnimatedText as="h3" className="max-w-3xl font-[family:var(--font-display)] text-[clamp(2.2rem,4.5vw,3.6rem)] font-light leading-[1.4] tracking-wide text-white/95">
+  Light softens. Conversations fade in.<br/><span className="text-white/60 block mt-2">The space shifts to experience.</span>
+</AnimatedText>
                   </div>
                 </div>
               </article>
@@ -1016,9 +1086,9 @@ function LuxuryExperienceScene() {
             <AmbientGrid opacity="opacity-30" />
             <div className="mx-auto max-w-[1800px] space-y-12">
               <div className="space-y-5">
-                <h2 className="max-w-6xl font-[family:var(--font-display)] text-[clamp(3.6rem,9vw,9rem)] leading-[0.9] tracking-[-0.04em] text-white drop-shadow-md">
-                  Everything connects.<br/>Every step, every transition…<br/>leading to a place that never feels empty.
-                </h2>
+                <AnimatedText as="h2" className="max-w-3xl font-[family:var(--font-display)] text-[clamp(2.4rem,5vw,4.2rem)] font-light leading-[1.4] tracking-wide text-white/95">
+  Everything connects.<br/><span className="text-white/60 block mt-2">A place that never feels empty.</span>
+</AnimatedText>
               </div>
               <div className="relative min-h-[46vh] overflow-hidden rounded-[2.6rem] border border-white/10">
                 <VideoSurface asset={concertCrowdVideo} playMode="visible" />

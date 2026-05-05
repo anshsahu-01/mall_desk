@@ -414,14 +414,18 @@ function RobotFigure({ progress }: { progress: MotionValue<number> }) {
 }
 
 function PlateScene({ progress }: { progress: MotionValue<number> }) {
-  const plateScale = useTransform(progress, [0, 0.4, 0.8, 1], [0.86, 1.05, 1.8, 2.4]);
-  const plateY = useTransform(progress, [0, 1], ["12%", "-2%"]);
+  const plateScale = useTransform(progress, [0, 0.4, 0.8, 1], [0.8, 1.02, 1.8, 2.4]);
+  const plateY = useTransform(progress, [0, 1], ["8%", "-2%"]);
+  const plateRotateX = useTransform(progress, [0, 0.4, 1], ["15deg", "8deg", "0deg"]);
+  const plateRotateY = useTransform(progress, [0, 1], ["-2deg", "0deg"]);
   const plateOpacity = useTransform(progress, [0.6, 0.85, 1], [1, 0.4, 0]);
   const diningRevealScale = useTransform(progress, [0.3, 0.8, 1], [0.4, 1.05, 1.12]);
   const diningRevealOpacity = useTransform(progress, [0.3, 0.5, 1], [0, 1, 1]);
+  const shadowOpacity = useTransform(progress, [0, 0.4, 0.8], [0.2, 0.8, 0]);
+  const lightShift = useTransform(progress, [0, 1], ["30%", "60%"]);
 
   return (
-    <div className="relative h-[82vh] w-full">
+    <div className="relative h-[82vh] w-full perspective-[1000px]">
       <motion.div
         className="absolute inset-0"
         style={{ scale: diningRevealScale, opacity: diningRevealOpacity }}
@@ -435,13 +439,35 @@ function PlateScene({ progress }: { progress: MotionValue<number> }) {
         </div>
       </motion.div>
 
+      {/* Ambient Table Shadow */}
       <motion.div
-        className="absolute left-1/2 top-1/2 h-[30rem] w-[30rem] -translate-x-1/2 -translate-y-1/2"
-        style={{ scale: plateScale, y: plateY, opacity: plateOpacity }}
+        className="absolute left-1/2 top-1/2 h-[32rem] w-[34rem] -translate-x-1/2 -translate-y-[40%] rounded-full bg-black/60 blur-[60px]"
+        style={{ opacity: shadowOpacity, scale: plateScale }}
+      />
+
+      <motion.div
+        className="absolute left-1/2 top-1/2 h-[30rem] w-[30rem] -translate-x-1/2 -translate-y-1/2 transform-style-3d"
+        style={{ scale: plateScale, y: plateY, opacity: plateOpacity, rotateX: plateRotateX, rotateY: plateRotateY }}
       >
-        <div className="absolute inset-0 rounded-full border border-white/25 bg-[radial-gradient(circle_at_30%_30%,#ffffff,#dddddd_55%,#bcbcbc_78%,#969696)] shadow-[0_50px_110px_rgba(0,0,0,0.45)]" />
-        <div className="absolute inset-[13%] rounded-full border border-black/6 bg-[radial-gradient(circle_at_35%_35%,#fafafa,#e8e8e8_72%,#cbcbcb)]" />
-        <div className="absolute inset-[31%] overflow-hidden rounded-full border border-black/8">
+        {/* Outer Rim */}
+        <motion.div 
+          className="absolute inset-0 rounded-full border border-white/40 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),inset_0_-8px_12px_rgba(0,0,0,0.2),0_40px_80px_rgba(0,0,0,0.6)]"
+          style={{ background: `radial-gradient(circle at ${lightShift} ${lightShift}, #ffffff, #f0f0f0 40%, #cccccc 75%, #888888)` }}
+        >
+          {/* Subtle texture/noise overlay */}
+          <div className="absolute inset-0 opacity-10 mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
+        </motion.div>
+        
+        {/* Inner Curve */}
+        <div className="absolute inset-[13%] rounded-full border border-black/10 shadow-[inset_0_8px_16px_rgba(0,0,0,0.1),inset_0_-2px_4px_rgba(255,255,255,0.5)]">
+          <motion.div 
+            className="absolute inset-0 rounded-full"
+            style={{ background: `radial-gradient(circle at ${lightShift} ${lightShift}, #fcfcfc, #e2e2e2 65%, #bbbbbb)` }}
+          />
+        </div>
+
+        {/* Center Well */}
+        <div className="absolute inset-[31%] overflow-hidden rounded-full border border-black/15 shadow-[inset_0_12px_24px_rgba(0,0,0,0.15)]">
           <motion.div
             className="absolute inset-0"
             style={{ scale: diningRevealScale, opacity: diningRevealOpacity }}
@@ -451,14 +477,17 @@ function PlateScene({ progress }: { progress: MotionValue<number> }) {
         </div>
       </motion.div>
 
-      <div className="absolute left-[18%] top-1/2 h-[22rem] w-8 -translate-y-1/2 rounded-full bg-[linear-gradient(180deg,#f3f3f3,#b7b7b7)] shadow-[0_24px_40px_rgba(0,0,0,0.2)]" />
-      <div className="absolute left-[17.6%] top-[23%] flex gap-[5px]">
+      {/* Silverware */}
+      <motion.div className="absolute left-[18%] top-1/2 h-[22rem] w-8 -translate-y-1/2 rounded-full shadow-[0_24px_40px_rgba(0,0,0,0.4),inset_0_2px_4px_rgba(255,255,255,0.8)]" style={{ background: `linear-gradient(135deg, #ffffff, #d4d4d4 50%, #9e9e9e)`, rotateX: plateRotateX }}>
+        <div className="absolute inset-[1px] rounded-full opacity-20 mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
+      </motion.div>
+      <motion.div className="absolute left-[17.6%] top-[23%] flex gap-[5px]" style={{ rotateX: plateRotateX }}>
         {[0, 1, 2, 3].map((item) => (
-          <span key={item} className="h-16 w-[4px] rounded-full bg-white/92" />
+          <span key={item} className="h-16 w-[4px] rounded-full bg-white/95 shadow-[0_4px_8px_rgba(0,0,0,0.2)]" />
         ))}
-      </div>
-      <div className="absolute right-[18%] top-1/2 h-[22rem] w-3 -translate-y-1/2 rounded-full bg-[linear-gradient(180deg,#f3f3f3,#bababa)] shadow-[0_24px_40px_rgba(0,0,0,0.2)]" />
-      <div className="absolute right-[17.1%] top-[22%] h-24 w-14 rounded-t-full rounded-b-[1.2rem] border border-white/25 bg-[linear-gradient(180deg,#f5f5f5,#d1d1d1)]" />
+      </motion.div>
+      <motion.div className="absolute right-[18%] top-1/2 h-[22rem] w-3 -translate-y-1/2 rounded-full shadow-[0_24px_40px_rgba(0,0,0,0.4),inset_0_2px_4px_rgba(255,255,255,0.8)]" style={{ background: `linear-gradient(135deg, #ffffff, #d4d4d4 50%, #9e9e9e)`, rotateX: plateRotateX }} />
+      <motion.div className="absolute right-[17.1%] top-[22%] h-24 w-14 rounded-t-full rounded-b-[1.2rem] shadow-[0_12px_24px_rgba(0,0,0,0.3),inset_0_2px_4px_rgba(255,255,255,0.8)]" style={{ background: `linear-gradient(135deg, #ffffff, #d4d4d4 50%, #9e9e9e)`, rotateX: plateRotateX }} />
     </div>
   );
 }
@@ -618,10 +647,9 @@ function LuxuryExperienceScene() {
             start: "top top",
             end: () => "+=" + (track.scrollWidth - window.innerWidth),
             pinSpacing: true,
-            scrub: 1,
-            anticipatePin: 1,
+            scrub: 2,
+          anticipatePin: 1,
             invalidateOnRefresh: true,
-            markers: true,
           },
         });
 
@@ -633,7 +661,7 @@ function LuxuryExperienceScene() {
               opacity: 1,
               y: 0,
               scale: 1,
-              ease: "power2.out",
+              ease: "power3.inOut",
               scrollTrigger: {
                 trigger: panel,
                 containerAnimation: horizontalTween,
@@ -653,7 +681,7 @@ function LuxuryExperienceScene() {
           end: () => `+=${window.innerHeight * 2.2}`,
           pin: robotPinRef.current,
           pinSpacing: true,
-          scrub: 1.5,
+          scrub: 2,
           anticipatePin: 1,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
@@ -669,7 +697,7 @@ function LuxuryExperienceScene() {
           end: () => `+=${window.innerHeight * 2.2}`,
           pin: diningPinRef.current,
           pinSpacing: true,
-          scrub: 1.5,
+          scrub: 2,
           anticipatePin: 1,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
@@ -694,7 +722,7 @@ function LuxuryExperienceScene() {
     <SmoothScrollProvider>
       <div ref={pageRef} className="bg-black text-white">
         <main className="relative overflow-hidden">
-          <section ref={heroRef} className="relative min-h-[170vh] border-b border-white/10">
+          <section ref={heroRef} className="relative min-h-[170vh]">
             <div className="sticky top-0 h-screen overflow-hidden">
               <motion.div
                 className="absolute inset-0 z-0 origin-center overflow-hidden border border-white/10 shadow-[0_30px_90px_rgba(0,0,0,0.36)] transform-gpu [contain:layout_paint_style] [will-change:transform]"
@@ -735,25 +763,13 @@ function LuxuryExperienceScene() {
                 </div>
 
                 <div className="grid items-end gap-14 pb-14 pt-24 lg:grid-cols-[1.15fr_0.85fr]">
-                  <div className="space-y-8">
-                    <p className="max-w-md text-[11px] uppercase tracking-[0.38em] text-white/50 sm:text-xs">
-                      Architecture. Entertainment. Destination culture. Premium circulation.
-                    </p>
-                    <h1 className="max-w-6xl font-[family:var(--font-display)] text-[clamp(4.8rem,16vw,13rem)] leading-[0.83] tracking-[-0.06em] text-white">
-                      A mall
-                      <br />
-                      staged like
-                      <br />
-                      a film.
+                  <div className="space-y-8 lg:col-span-2">
+                    <h1 className="max-w-6xl font-[family:var(--font-display)] text-[clamp(4.8rem,16vw,10rem)] leading-[0.9] tracking-[-0.05em] text-white drop-shadow-lg">
+                      It doesn’t feel like entering a mall.<br/>It feels like stepping into a world that was waiting for you.
                     </h1>
                   </div>
 
                   <div className="space-y-10 lg:justify-self-end">
-                    <p className="max-w-md text-sm leading-7 text-white/72 sm:text-base">
-                      The hero remains dominant on entry, then shrinks into a
-                      floating cinematic window so the rest of the ecosystem can
-                      evolve around it without losing momentum.
-                    </p>
 
                     <div className="grid grid-cols-2 gap-4">
                       <ImpactMetric value="250+" label="Luxury Brands" />
@@ -767,7 +783,7 @@ function LuxuryExperienceScene() {
             </div>
           </section>
 
-          <section className="relative z-10 border-b border-white/10 px-4 py-16 sm:px-8 lg:px-12 [content-visibility:auto] [contain-intrinsic-size:920px]">
+          <section className="relative z-10 px-4 py-16 sm:px-8 lg:px-12 [content-visibility:auto] [contain-intrinsic-size:920px]">
             <AmbientGrid opacity="opacity-40" />
             <div className="mx-auto grid max-w-[1800px] items-center gap-8 lg:grid-cols-[0.94fr_1.06fr]">
               <div className="relative min-h-[62vh] overflow-hidden rounded-[2.4rem] border border-white/10 bg-[#050505] shadow-[0_28px_80px_rgba(0,0,0,0.46)]">
@@ -777,26 +793,15 @@ function LuxuryExperienceScene() {
                 </DeferredRender>
               </div>
 
-              <div className="relative space-y-10 px-4 py-8 sm:px-8 lg:px-10">
-                <div className="space-y-4">
-                  <p className="text-[11px] uppercase tracking-[0.4em] text-white/45 sm:text-xs">
-                    Technology Pavilion
-                  </p>
-                  <h2 className="max-w-3xl font-[family:var(--font-display)] text-[clamp(3rem,7vw,6.4rem)] leading-[0.94] tracking-[-0.04em]">
-                    The opening object becomes one district in a larger world.
-                  </h2>
-                </div>
-
-                <p className="max-w-xl text-base leading-8 text-white/66">
-                  The premium product reveal is now just one curated showroom
-                  inside a destination driven by architecture, media, crowds, and
-                  cultural programming.
-                </p>
+              <div className="relative flex h-full items-center px-4 py-8 sm:px-8 lg:px-10">
+                <h2 className="max-w-4xl font-[family:var(--font-display)] text-[clamp(3.4rem,8vw,7.2rem)] leading-[0.9] tracking-[-0.04em] text-white drop-shadow-md">
+                  There are no breaks here.<br/>No pauses.<br/>Just a space that moves with you, as if it already knows where you're going.
+                </h2>
               </div>
             </div>
           </section>
 
-          <section ref={atriumRef} className="relative min-h-[152vh] border-b border-white/10">
+          <section ref={atriumRef} className="relative min-h-[152vh]">
             <div className="sticky top-0 h-screen overflow-hidden">
               <motion.div
                 className="absolute inset-0 origin-center overflow-hidden border border-white/10 shadow-[0_30px_90px_rgba(0,0,0,0.36)] transform-gpu [contain:layout_paint_style] [will-change:transform]"
@@ -835,40 +840,18 @@ function LuxuryExperienceScene() {
                 className="relative mx-auto flex h-full w-full max-w-[1800px] flex-col justify-between px-6 py-10 sm:px-10 lg:px-16"
                 style={{ y: atriumTextY, opacity: atriumTextOpacity }}
               >
-                <div className="text-[10px] uppercase tracking-[0.38em] text-white/42 sm:text-xs">
-                  Atrium Sequence
-                </div>
-                <div className="max-w-5xl space-y-6 pb-14">
-                  <h2 className="font-[family:var(--font-display)] text-[clamp(3.4rem,9vw,8.6rem)] leading-[0.88] tracking-[-0.05em]">
-                    Giant interior volume.
-                    <br />
-                    Escalators. Crowds.
-                    <br />
-                    A public stage.
-                  </h2>
-                  <p className="max-w-2xl text-base leading-8 text-white/70 sm:text-lg">
-                    The second transformation alternates to the opposite side so
-                    the page feels composed rather than repetitive.
-                  </p>
-                </div>
+                <div className="pb-14"></div>
               </motion.div>
             </div>
           </section>
 
-          <section ref={corridorRef} className="relative h-screen border-b border-white/10">
+          <section ref={corridorRef} className="relative h-screen">
             <div className="relative flex h-screen items-center overflow-hidden">
               <AmbientGrid />
               <div className="absolute left-0 top-0 h-full w-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_45%)]" />
               <div className="absolute left-0 top-6 z-10 w-full px-6 sm:px-10 lg:px-16">
                 <div className="mx-auto flex w-full max-w-[1800px] items-end justify-between gap-8">
-                  <div className="space-y-4">
-                    <p className="text-[11px] uppercase tracking-[0.4em] text-white/45 sm:text-xs">
-                      Luxury Corridors
-                    </p>
-                    <h2 className="max-w-5xl font-[family:var(--font-display)] text-[clamp(3rem,7vw,7rem)] leading-[0.92] tracking-[-0.05em]">
-                      Media-rich corridors centered inside the viewport before they move.
-                    </h2>
-                  </div>
+                  <div className="space-y-4"></div>
                 </div>
               </div>
 
@@ -887,21 +870,14 @@ function LuxuryExperienceScene() {
                       <span>{panel.index}</span>
                       <span>Scene Shift</span>
                     </div>
-                    <div className="relative space-y-4">
-                      <h3 className="max-w-4xl font-[family:var(--font-display)] text-[clamp(2.6rem,5vw,5.6rem)] leading-[0.92] tracking-[-0.05em]">
-                        {panel.title}
-                      </h3>
-                      <p className="max-w-xl text-base leading-7 text-white/62">
-                        {panel.body}
-                      </p>
-                    </div>
+                    <div className="relative space-y-4"></div>
                   </article>
                 ))}
               </div>
             </div>
           </section>
 
-          <section ref={robotRef} className="relative border-b border-white/10">
+          <section ref={robotRef} className="relative">
             <div
               ref={robotPinRef}
               className="relative h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_26%),linear-gradient(180deg,#070707,#020202)]"
@@ -928,51 +904,20 @@ function LuxuryExperienceScene() {
               </motion.div>
 
               <div className="relative z-10 mx-auto grid h-full w-full max-w-[1800px] items-center gap-10 px-6 sm:px-10 lg:grid-cols-[0.95fr_1.05fr] lg:px-16">
-                <div className="space-y-6">
-                  <motion.p
-                    className="text-[11px] uppercase tracking-[0.4em] text-white/45 sm:text-xs"
-                    style={{ opacity: robotTextOpacity }}
-                  >
-                    Electronics Transition
-                  </motion.p>
-                  <motion.h2
-                    className="max-w-3xl font-[family:var(--font-display)] text-[clamp(3rem,7vw,7rem)] leading-[0.9] tracking-[-0.05em]"
-                    style={{ opacity: robotTextOpacity }}
-                  >
-                    The robot winks, and the electronics world expands from the eye itself.
-                  </motion.h2>
-                  <motion.p
-                    className="max-w-xl text-base leading-8 text-white/64"
-                    style={{ opacity: robotTextOpacity }}
-                  >
-                    The portal is no longer a decorative beat. Scroll now drives a
-                    true spatial transition from robotic host to full retail media chamber.
-                  </motion.p>
-                </div>
+                <div className="space-y-6"></div>
 
                 <RobotFigure progress={robotProgress} />
               </div>
             </div>
           </section>
 
-          <section className="relative border-b border-white/10 px-6 py-18 sm:px-10 lg:px-16 lg:py-22 [content-visibility:auto] [contain-intrinsic-size:980px]">
+          <section className="relative px-6 py-18 sm:px-10 lg:px-16 lg:py-22 [content-visibility:auto] [contain-intrinsic-size:980px]">
             <AmbientGrid opacity="opacity-35" />
             <div className="mx-auto grid max-w-[1800px] gap-8 lg:grid-cols-[1.08fr_0.92fr]">
               <article className="relative min-h-[72vh] overflow-hidden rounded-[2.5rem] border border-white/10">
                 <VideoSurface asset={appleStoreVideo} playMode="visible" />
                 <div className="relative flex h-full flex-col justify-between p-8 sm:p-10 lg:p-12">
-                  <p className="text-[10px] uppercase tracking-[0.34em] text-white/42">
-                    Electronics District
-                  </p>
-                  <div className="space-y-5">
-                    <h3 className="max-w-3xl font-[family:var(--font-display)] text-[clamp(2.8rem,5.8vw,5.8rem)] leading-[0.92] tracking-[-0.05em]">
-                      Screens, reflective objects, and luxury tech staged as spectacle.
-                    </h3>
-                    <p className="max-w-xl text-base leading-8 text-white/66">
-                      After the eye portal opens, the district holds together as a
-                      complete visual environment instead of a disconnected follow-up block.
-                    </p>
-                  </div>
+                  
                 </div>
               </article>
               <div className="grid gap-8">
@@ -990,16 +935,14 @@ function LuxuryExperienceScene() {
                     <p className="mb-3 text-[10px] uppercase tracking-[0.34em] text-white/40">
                       Product Worlds
                     </p>
-                    <p className="max-w-md text-lg leading-8 text-white/68">
-                      Luxury watches, concept audio, designer accessories, and premium interfaces sit inside one seamless electronics universe.
-                    </p>
+                    
                   </div>
                 </article>
               </div>
             </div>
           </section>
 
-          <section ref={diningRef} className="relative border-b border-white/10">
+          <section ref={diningRef} className="relative">
             <div
               ref={diningPinRef}
               className="relative h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1),transparent_30%),linear-gradient(180deg,#0a0a0a,#040404)]"
@@ -1026,48 +969,28 @@ function LuxuryExperienceScene() {
 
               <div className="relative z-10 mx-auto grid h-full w-full max-w-[1800px] items-center gap-8 px-6 sm:px-10 lg:grid-cols-[1.04fr_0.96fr] lg:px-16">
                 <PlateScene progress={diningProgress} />
-                <div className="space-y-6">
-                  <motion.p
-                    className="text-[11px] uppercase tracking-[0.4em] text-white/45 sm:text-xs"
-                    style={{ opacity: diningTextOpacity }}
-                  >
-                    Dining Transition
-                  </motion.p>
+                <div className="space-y-6 flex h-full items-center">
                   <motion.h2
-                    className="max-w-3xl font-[family:var(--font-display)] text-[clamp(3rem,7vw,7rem)] leading-[0.9] tracking-[-0.05em]"
+                    className="max-w-4xl font-[family:var(--font-display)] text-[clamp(3rem,7vw,6.4rem)] leading-[0.9] tracking-[-0.05em] text-white drop-shadow-md"
                     style={{ opacity: diningTextOpacity }}
                   >
-                    The plate fills the frame, then opens directly into the restaurant world.
+                    The world slows down.<br/>A table appears.<br/>And suddenly, you’re not exploring anymore — you’re arriving.
                   </motion.h2>
-                  <motion.p
-                    className="max-w-xl text-base leading-8 text-white/64"
-                    style={{ opacity: diningTextOpacity }}
-                  >
-                    The zoom is now physically connected: tabletop detail gives way
-                    to hospitality atmosphere without falling back to a normal section break.
-                  </motion.p>
                 </div>
               </div>
             </div>
           </section>
 
-          <section className="relative border-b border-white/10 px-6 py-18 sm:px-10 lg:px-16 lg:py-22 [content-visibility:auto] [contain-intrinsic-size:980px]">
+          <section className="relative px-6 py-18 sm:px-10 lg:px-16 lg:py-22 [content-visibility:auto] [contain-intrinsic-size:980px]">
             <AmbientGrid opacity="opacity-35" />
             <div className="mx-auto grid max-w-[1800px] gap-8 lg:grid-cols-[1.02fr_0.98fr]">
               <article className="relative min-h-[72vh] overflow-hidden rounded-[2.5rem] border border-white/10">
                 <VideoSurface asset={restaurantPlatingVideo} playMode="visible" />
                 <div className="relative flex h-full flex-col justify-between p-8 sm:p-10 lg:p-12">
-                  <p className="text-[10px] uppercase tracking-[0.34em] text-white/42">
-                    Dining + Nightlife
-                  </p>
-                  <div className="space-y-5">
-                    <h3 className="max-w-3xl font-[family:var(--font-display)] text-[clamp(2.8rem,5.8vw,5.8rem)] leading-[0.92] tracking-[-0.05em]">
-                      Restaurants turn the mall into an after-dark destination.
+                  <div className="flex h-full items-center">
+                    <h3 className="max-w-3xl font-[family:var(--font-display)] text-[clamp(3.2rem,6vw,6.4rem)] leading-[0.9] tracking-[-0.04em] text-white drop-shadow-md">
+                      Light softens. Conversations fade in.<br/>The space shifts from spectacle… to experience.
                     </h3>
-                    <p className="max-w-xl text-base leading-8 text-white/66">
-                      Rooftop dining, bars, and cinematic hospitality visuals keep
-                      the destination emotionally warm after the retail sequences.
-                    </p>
                   </div>
                 </div>
               </article>
@@ -1082,9 +1005,7 @@ function LuxuryExperienceScene() {
                     <p className="mb-3 text-[10px] uppercase tracking-[0.34em] text-white/40">
                       Hospitality Layer
                     </p>
-                    <p className="max-w-md text-lg leading-8 text-white/68">
-                      The dining chapter now feels like an extension of the zoom transition instead of a separate page segment.
-                    </p>
+                    
                   </div>
                 </article>
               </div>
@@ -1095,20 +1016,10 @@ function LuxuryExperienceScene() {
             <AmbientGrid opacity="opacity-30" />
             <div className="mx-auto max-w-[1800px] space-y-12">
               <div className="space-y-5">
-                <p className="text-[11px] uppercase tracking-[0.4em] text-white/45 sm:text-xs">
-                  Destination Finale
-                </p>
-                <h2 className="max-w-6xl font-[family:var(--font-display)] text-[clamp(3rem,8vw,8rem)] leading-[0.9] tracking-[-0.05em]">
-                  One cinematic luxury mall universe,
-                  <br />
-                  evolving without dead air.
+                <h2 className="max-w-6xl font-[family:var(--font-display)] text-[clamp(3.6rem,9vw,9rem)] leading-[0.9] tracking-[-0.04em] text-white drop-shadow-md">
+                  Everything connects.<br/>Every step, every transition…<br/>leading to a place that never feels empty.
                 </h2>
               </div>
-              <p className="max-w-3xl text-base leading-8 text-white/64 sm:text-lg">
-                The journey now holds together as a single moving world: smoother
-                hero performance, transformed media windows, centered corridors,
-                real portal transitions, and continuous environmental motion between scenes.
-              </p>
               <div className="relative min-h-[46vh] overflow-hidden rounded-[2.6rem] border border-white/10">
                 <VideoSurface asset={concertCrowdVideo} playMode="visible" />
               </div>
